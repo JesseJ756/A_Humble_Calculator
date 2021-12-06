@@ -1,4 +1,9 @@
 /*
+ *  UCF COP3330 Fall 2021 Assignment 6 Solution
+ *  Copyright 2021 Jesse Johnson
+ */
+
+/*
 std_lib_facilities.h
 */
 
@@ -67,6 +72,7 @@ struct Range_error : out_of_range {	// enhanced vector range error reporting
 
 
 // trivially range-checked vector (no iterator checking):
+
 template< class T> struct Vector : public std::vector<T> {
 	using size_type = typename std::vector<T>::size_type;
 
@@ -79,7 +85,7 @@ template< class T> struct Vector : public std::vector<T> {
 	Vector(I first, I last) : std::vector<T>(first, last) {}
 	Vector(initializer_list<T> list) : std::vector<T>(list) {}
 */
-	using std::vector<T>::vector;	// inheriting constructor
+	//using std::vector<T>::vector;	// inheriting constructor
 
 	T& operator[](unsigned int i) // rather than return at(i);
 	{
@@ -92,6 +98,7 @@ template< class T> struct Vector : public std::vector<T> {
 		return std::vector<T>::operator[](i);
 	}
 };
+
 
 // disgusting macro hack to get a range checked vector:
 #define vector Vector
@@ -184,7 +191,7 @@ inline void keep_window_open(string s)
 
 
 
-// error function to be used (only) until error() is introduced in Chapter 5:
+// error function to be used (only) til error() is introduced in Chapter 5:
 inline void simple_error(string s)	// write ``error: s and exit program
 {
 	cerr << "error: " << s << '\n';
@@ -215,9 +222,9 @@ inline default_random_engine& get_rand()
 
 inline void seed_randint(int s) { get_rand().seed(s); }
 
-inline int randint(int min, int max) { return uniform_int_distribution<>{min, max}(get_rand()); }
+//inline int randint(int min, int max) { return uniform_int_distribution<>{min, max}(get_rand()); } // COMMENT OUT
 
-inline int randint(int max) { return randint(0, max); }
+//inline int randint(int max) { return randint(0, max); } // COMMENT OUT
 
 //inline double sqrt(int x) { return sqrt(double(x)); }	// to match C++0x
 

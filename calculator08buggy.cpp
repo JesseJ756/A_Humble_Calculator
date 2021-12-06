@@ -1,6 +1,8 @@
 /*
 	calculator08buggy.cpp | From: Programming -- Principles and Practice Using C++, by Bjarne Stroustrup
 	We have inserted 3 bugs that the compiler will catch and 3 that it won't.
+
+	Drills 1-6 + Ex 01-03 were done
 */
 
 #include "std_lib_facilities.h"
@@ -11,6 +13,7 @@ struct Token {
 	string name;
 	Token(char ch) :kind(ch), value(0) { }
 	Token(char ch, double val) :kind(ch), value(val) { }
+	Token(char ch, string s) :kind(ch), name(s) { }
 };
 
 class Token_stream {
@@ -30,6 +33,7 @@ const char quit = 'Q';
 const char print = ';';
 const char number = '8';
 const char name = 'a';
+const char constVal = 'C';
 
 Token Token_stream::get()
 {
@@ -64,16 +68,18 @@ Token Token_stream::get()
 	return Token(number, val);
 	}
 	default:
-		if (isalpha(ch)) {
+		if (isalpha(ch) || ch == '_') { // ADD || ch == '_'
 			string s;
 			s += ch;
-			while (cin.get(ch) && (isalpha(ch) || isdigit(ch))) s = ch;
+			while (cin.get(ch) && (isalpha(ch) || isdigit(ch) || ch == '_')) s += ch; // s = ch -> s += ch // ADD || ch == '_'
 			cin.unget();
 			if (s == "let") return Token(let);
-			if (s == "quit") return Token(name);
+			if (s == "quit") return Token(quit); // return Token(name) -> return Token(quit)
+			if (s == "const") return Token(constVal);
 			return Token(name, s);
 		}
 		error("Bad token");
+		return Token(quit); // Satisfies warning
 	}
 }
 
@@ -93,7 +99,8 @@ void Token_stream::ignore(char c)
 struct Variable {
 	string name;
 	double value;
-	Variable(string n, double v) :name(n), value(v) { }
+	bool constVal; // For const values
+	Variable(string n, double v, bool c) :name(n), value(v), constVal(c) { }
 };
 
 vector<Variable> names;
@@ -103,12 +110,19 @@ double get_value(string s)
 	for (int i = 0; i < names.size(); ++i)
 		if (names[i].name == s) return names[i].value;
 	error("get: undefined name ", s);
+	return -1; // Satisfies warning
 }
 
 void set_value(string s, double d)
 {
 	for (int i = 0; i <= names.size(); ++i)
-		if (names[i].name == s) {
+		if (names[i].name == s)
+		{
+			//cout << names[i].constVal << endl;
+			if(names[i].constVal == true)
+			{
+				error("set: name is a constant ", s);
+			}
 			names[i].value = d;
 			return;
 		}
@@ -122,6 +136,16 @@ bool is_declared(string s)
 	return false;
 }
 
+double define_name(string var, double val, bool constVal) // From book pg.246
+{
+ if (is_declared(var))
+	error(var, " declared twice");
+
+ names.push_back(Variable(var, val, constVal)); // var_table -> names
+
+ return val;
+}
+
 Token_stream ts;
 
 double expression();
@@ -133,16 +157,57 @@ double primary()
 	case '(':
 	{	double d = expression();
 	t = ts.get();
-	if (t.kind != ')') error("'(' expected");
+	if (t.kind != ')') error("')' expected");
+	return d; // Insert return d;
 	}
 	case '-':
 		return -primary();
 	case number:
 		return t.value;
 	case name:
+	{
+		// When changine a value of a previously declared variable
+		Token temp = ts.get();
+		if(temp.kind == '=')
+		{
+			double d = expression();
+			set_value(t.name, d);
+			return d;
+		}
+		else
+		{
+			ts.unget(temp);
+		}
+
 		return get_value(t.name);
+	}
+	case constVal:
+	{
+		Token tempName = ts.get();
+
+		if(is_declared(tempName.name)) 
+		{
+			error(tempName.name, " declared twice");
+		}
+		else
+		{
+			Token tempOp = ts.get();
+
+			if(tempOp.kind == '=')
+			{
+				double d = expression();
+				define_name(tempName.name, d, true);
+				return d;
+			}
+			else
+			{
+				error("'=' expected");
+			}
+		}
+	}
 	default:
 		error("primary expected");
+		return -1; // Satisfies warning
 	}
 }
 
@@ -160,6 +225,14 @@ double term()
 		if (d == 0) error("divide by zero");
 		left /= d;
 		break;
+		}
+		case '%':
+		{
+			double d = primary();
+			if (d == 0) error("divide by zero"); 
+			left = fmod(left,d);
+			//t = ts.get();
+			break;
 		}
 		default:
 			ts.unget(t);
@@ -196,19 +269,23 @@ double declaration()
 	Token t2 = ts.get();
 	if (t2.kind != '=') error("= missing in declaration of ", name);
 	double d = expression();
-	names.push_back(Variable(name, d));
+	names.push_back(Variable(name, d, false));
 	return d;
 }
 
 double statement()
 {
 	Token t = ts.get();
-	switch (t.kind) {
-	case let:
-		return declaration();
-	default:
-		ts.unget(t);
-		return expression();
+
+	switch (t.kind)
+	{
+		case let:
+			return declaration();
+		default:
+		{	
+			ts.unget(t);
+			return expression();
+		}
 	}
 }
 
@@ -237,8 +314,9 @@ void calculate()
 }
 
 int main()
-
 try {
+	define_name("k", 1000, true);
+
 	calculate();
 	return 0;
 }
