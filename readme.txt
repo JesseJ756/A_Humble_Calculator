@@ -1,7 +1,6 @@
-UCF COP3330 Fall 2021 Assignment 6 Solution
-Copyright 2021 Jesse Johnson
+2021 Jesse Johnson
 
-******** calculator08buggy project ********
+******** The Simple Calculator ********
 
 - To compile: 
     g++ calculator08buggy.cpp
