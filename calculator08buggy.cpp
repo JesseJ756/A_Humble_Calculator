@@ -1,8 +1,6 @@
 /*
 	calculator08buggy.cpp | From: Programming -- Principles and Practice Using C++, by Bjarne Stroustrup
 	We have inserted 3 bugs that the compiler will catch and 3 that it won't.
-
-	Drills 1-6 + Ex 01-03 were done
 */
 
 #include "std_lib_facilities.h"
